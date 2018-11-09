@@ -60,6 +60,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\CameraMove.cs" />
+    <Compile Include="Assets\Scripts\CameraTransformation.cs" />
+    <Compile Include="Assets\Scripts\PositionTransformation.cs" />
+    <Compile Include="Assets\Scripts\RotationTransformation.cs" />
+    <Compile Include="Assets\Scripts\ScaleTransformation.cs" />
+    <Compile Include="Assets\Scripts\Transformation.cs" />
     <Compile Include="Assets\Scripts\TransformationGrid.cs" />
     <Reference Include="Unity.TextMeshPro.Editor">
       <HintPath>D:/ZLearning/Unity Learning/Rendering/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>
