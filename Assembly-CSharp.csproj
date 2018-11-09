@@ -67,6 +67,7 @@
     <Compile Include="Assets\Scripts\ScaleTransformation.cs" />
     <Compile Include="Assets\Scripts\Transformation.cs" />
     <Compile Include="Assets\Scripts\TransformationGrid.cs" />
+    <None Include="Assets\Materials\My First Shader.shader" />
     <Reference Include="Unity.TextMeshPro.Editor">
       <HintPath>D:/ZLearning/Unity Learning/Rendering/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>
     </Reference>
