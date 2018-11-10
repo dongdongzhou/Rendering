@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\Transformation.cs" />
     <Compile Include="Assets\Scripts\TransformationGrid.cs" />
     <None Include="Assets\Materials\My First Shader.shader" />
+    <None Include="Assets\Materials\My First Lighting Shader.shader" />
     <None Include="Assets\Materials\Texture Splatting.shader" />
     <None Include="Assets\Materials\Textured With Detail.shader" />
     <Reference Include="Unity.TextMeshPro.Editor">
