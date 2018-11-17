@@ -1,6 +1,4 @@
-﻿// Upgrade NOTE: replaced 'UNITY_PASS_TEXCUBE(unity_SpecCube1)' with 'UNITY_PASS_TEXCUBE_SAMPLER(unity_SpecCube1,unity_SpecCube0)'
-
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
 #if !defined(MY_LIGHTING_INCLUDED)
 #define MY_LIGHTING_INCLUDED
@@ -15,8 +13,12 @@ float4 _MainTex_ST, _DetailTex_ST;
 sampler2D _NormalMap, _DetailNormalMap;
 float _BumpScale, _DetailBumpScale;
 
+sampler2D _MetallicMap;
 float _Metallic;
 float _Smoothness;
+
+sampler2D _EmissionMap;
+float3 _Emission;
 
 struct VertexData {
 	float4 vertex : POSITION;
@@ -45,6 +47,36 @@ struct Interpolators {
 		float3 vertexLightColor : TEXCOORD6;
 	#endif
 };
+
+float GetMetallic (Interpolators i) {
+	#if defined(_METALLIC_MAP)
+		return tex2D(_MetallicMap, i.uv.xy).r;
+	#else
+		return _Metallic;
+	#endif
+}
+
+float GetSmoothness (Interpolators i) {
+	float smoothness = 1;
+	#if defined(_SMOOTHNESS_ALBEDO)
+		smoothness = tex2D(_MainTex, i.uv.xy).a;
+	#elif defined(_SMOOTHNESS_METALLIC) && defined(_METALLIC_MAP)
+		smoothness = tex2D(_MetallicMap, i.uv.xy).a;
+	#endif
+	return smoothness * _Smoothness;
+}
+
+float3 GetEmission (Interpolators i) {
+	#if defined(FORWARD_BASE_PASS)
+		#if defined(_EMISSION_MAP)
+			return tex2D(_EmissionMap, i.uv.xy) * _Emission;
+		#else
+			return _Emission;
+		#endif
+	#else
+		return 0;
+	#endif
+}
 
 void ComputeVertexLightColor (inout Interpolators i) {
 	#if defined(VERTEXLIGHT_ON)
@@ -99,19 +131,23 @@ UnityLight CreateLight (Interpolators i) {
 	light.ndotl = DotClamped(i.normal, light.dir);
 	return light;
 }
-float3 BoxProjection(float3 direction, float3 position, float4 cubemapPosition, float3 boxMin, float3 boxMax)
-{
+
+float3 BoxProjection (
+	float3 direction, float3 position,
+	float4 cubemapPosition, float3 boxMin, float3 boxMax
+) {
 	#if UNITY_SPECCUBE_BOX_PROJECTION
 		UNITY_BRANCH
-		if(cubemapPosition.w > 0){
-			float3 factors = ((direction > 0 ? boxMax : boxMin) - position) / direction;
-			float scalar = min(min(factors.x,factors.y), factors.z);
-			direction = direction * scalar +(position - cubemapPosition);
+		if (cubemapPosition.w > 0) {
+			float3 factors =
+				((direction > 0 ? boxMax : boxMin) - position) / direction;
+			float scalar = min(min(factors.x, factors.y), factors.z);
+			direction = direction * scalar + (position - cubemapPosition);
 		}
 	#endif
-	
 	return direction;
 }
+
 UnityIndirect CreateIndirectLight (Interpolators i, float3 viewDir) {
 	UnityIndirect indirectLight;
 	indirectLight.diffuse = 0;
@@ -123,28 +159,33 @@ UnityIndirect CreateIndirectLight (Interpolators i, float3 viewDir) {
 
 	#if defined(FORWARD_BASE_PASS)
 		indirectLight.diffuse += max(0, ShadeSH9(float4(i.normal, 1)));
-		float3 relfectionDir = reflect(-viewDir, i.normal);
+		float3 reflectionDir = reflect(-viewDir, i.normal);
 		Unity_GlossyEnvironmentData envData;
-		envData.roughness = 1 - _Smoothness;
-		envData.reflUVW = BoxProjection(relfectionDir, i.worldPos,
-		unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
-		float3 probe0 = Unity_GlossyEnvironment(
-			UNITY_PASS_TEXCUBE(unity_SpecCube0), 
-			unity_SpecCube0_HDR, envData);
+		envData.roughness = 1 - GetSmoothness(i);
 		envData.reflUVW = BoxProjection(
-			relfectionDir, i.worldPos,
+			reflectionDir, i.worldPos,
+			unity_SpecCube0_ProbePosition,
+			unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax
+		);
+		float3 probe0 = Unity_GlossyEnvironment(
+			UNITY_PASS_TEXCUBE(unity_SpecCube0), unity_SpecCube0_HDR, envData
+		);
+		envData.reflUVW = BoxProjection(
+			reflectionDir, i.worldPos,
 			unity_SpecCube1_ProbePosition,
-			unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
+			unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax
+		);
 		#if UNITY_SPECCUBE_BLENDING
-			float Interpolator = unity_SpecCube0_BoxMin.w;
+			float interpolator = unity_SpecCube0_BoxMin.w;
 			UNITY_BRANCH
-			if(Interpolator < 0.99999)
-			{
+			if (interpolator < 0.99999) {
 				float3 probe1 = Unity_GlossyEnvironment(
-					UNITY_PASS_TEXCUBE_SAMPLER(unity_SpecCube1,unity_SpecCube0), 
-					unity_SpecCube0_HDR, envData);
-				indirectLight.specular = lerp(probe1, probe0, unity_SpecCube0_BoxMin.w);
-			} else {
+					UNITY_PASS_TEXCUBE_SAMPLER(unity_SpecCube1, unity_SpecCube0),
+					unity_SpecCube0_HDR, envData
+				);
+				indirectLight.specular = lerp(probe1, probe0, interpolator);
+			}
+			else {
 				indirectLight.specular = probe0;
 			}
 		#else
@@ -186,15 +227,17 @@ float4 MyFragmentProgram (Interpolators i) : SV_TARGET {
 	float3 specularTint;
 	float oneMinusReflectivity;
 	albedo = DiffuseAndSpecularFromMetallic(
-		albedo, _Metallic, specularTint, oneMinusReflectivity
+		albedo, GetMetallic(i), specularTint, oneMinusReflectivity
 	);
 
-	return UNITY_BRDF_PBS(
+	float4 color = UNITY_BRDF_PBS(
 		albedo, specularTint,
-		oneMinusReflectivity, _Smoothness,
+		oneMinusReflectivity, GetSmoothness(i),
 		i.normal, viewDir,
 		CreateLight(i), CreateIndirectLight(i, viewDir)
 	);
+	color.rgb += GetEmission(i);
+	return color;
 }
 
 #endif
