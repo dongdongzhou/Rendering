@@ -19,8 +19,14 @@
 
 		[NoScaleOffset] _DetailMask ("Detail Mask", 2D) = "white" {}
 		_DetailTex ("Detail Albedo", 2D) = "gray" {}
+
 		[NoScaleOffset] _DetailNormalMap ("Detail Normals", 2D) = "bump" {}
 		_DetailBumpScale ("Detail Bump Scale", Float) = 1
+
+		_AlphaCutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
+		[HideInInspector] _SrcBlend ("_SrcBlend", Float) =1
+		[HideInInspector] _DstBlend ("_DstBlend", Float) =0
+		[HideInInspector] _ZWrite ("_ZWrite", Float) = 1
 	}
 
 	CGINCLUDE
@@ -35,11 +41,13 @@
 			Tags {
 				"LightMode" = "ForwardBase"
 			}
-
+			Blend [_SrcBlend] [_DstBlend]
+			ZWrite [_ZWrite]
 			CGPROGRAM
 
 			#pragma target 3.0
 
+			#pragma shader_feature _ _RENDERING_CUTOUT _RENDERING_FADE _RENDERING_TRANSPARENT
 			#pragma shader_feature _METALLIC_MAP
 			#pragma shader_feature _ _SMOOTHNESS_ALBEDO _SMOOTHNESS_METALLIC
 			#pragma shader_feature _OCCLUSION_MAP
@@ -63,14 +71,14 @@
 			Tags {
 				"LightMode" = "ForwardAdd"
 			}
-
-			Blend One One
+			Blend [_SrcBlend] One 
 			ZWrite Off
 
 			CGPROGRAM
 
 			#pragma target 3.0
 
+			#pragma shader_feature _ _RENDERING_CUTOUT _RENDERING_FADE _RENDERING_TRANSPARENT
 			#pragma shader_feature _METALLIC_MAP
 			#pragma shader_feature _ _SMOOTHNESS_ALBEDO _SMOOTHNESS_METALLIC
 			#pragma shader_feature _DETAIL_MASK
