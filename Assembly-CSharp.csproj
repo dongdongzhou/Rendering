@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\CameraMove.cs" />
     <Compile Include="Assets\Scripts\CameraTransformation.cs" />
+    <Compile Include="Assets\Scripts\DeferredFogEffect.cs" />
     <Compile Include="Assets\Scripts\PositionTransformation.cs" />
     <Compile Include="Assets\Scripts\RotationTransformation.cs" />
     <Compile Include="Assets\Scripts\ScaleTransformation.cs" />
@@ -69,6 +70,7 @@
     <Compile Include="Assets\Scripts\Transformation.cs" />
     <Compile Include="Assets\Scripts\TransformationGrid.cs" />
     <None Include="Assets\Shaders\My Shadows.cginc" />
+    <None Include="Assets\Shaders\Deferred Fog.shader" />
     <None Include="Assets\Shaders\My First Shader.shader" />
     <None Include="Assets\Shaders\My Lighting.cginc" />
     <None Include="Assets\Shaders\Texture Splatting.shader" />
