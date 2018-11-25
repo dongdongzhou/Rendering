@@ -76,6 +76,8 @@
     <None Include="Assets\Shaders\Texture Splatting.shader" />
     <None Include="Assets\Shaders\Textured With Detail.shader" />
     <None Include="Assets\Shaders\My First Lighting Shader.shader" />
+    <None Include="Assets\Shaders\MyDeferredShading.cginc" />
+    <None Include="Assets\Shaders\DeferredShading.shader" />
     <Reference Include="Unity.TextMeshPro.Editor">
       <HintPath>D:/ZLearning/Unity Learning/Rendering/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>
     </Reference>
